@@ -164,8 +164,9 @@ indata = json.loads(json_input)
 outdata = []
 for resource_type, resource_args in indata:
     outdata.append([resource_type, compute_parameters(resource_args)])
+outobj = collections.OrderedDict([["resource_parameters", outdata]])
 
-json_output = json.dumps( outdata, separators=(",", ":"), indent=1 )
+json_output = json.dumps( outobj, separators=(",", ":"), indent=1 )
 
 if args.output == "-":
     sys.stdout.write(json_output)
