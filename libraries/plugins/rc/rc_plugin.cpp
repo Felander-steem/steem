@@ -265,7 +265,7 @@ void rc_plugin_impl::on_first_block()
             fc::variant_object& vo = kv.second.first;
             fc::mutable_variant_object mvo(vo);
             mvo["time_unit"] = int8_t( vo["time_unit"].as< rc_time_unit_type >() );
-            fc::from_variant( fc::variant( mvo ), resource_param_array[ k ] );
+            fc::from_variant( fc::variant( mvo ), params_obj.resource_param_array[ k ] );
          }
       } );
    _db.create< rc_pool_object >(
