@@ -181,7 +181,7 @@ void rc_plugin_impl::on_post_apply_transaction( const transaction_notification& 
       const rc_resource_params& params = params_obj.resource_param_array[i];
       int64_t pool = pool_obj.pool_array[i];
 
-      int64_t cost = compute_rc_cost_of_resources( params.curve_params, pool, count.resource_count[i] );
+      int64_t cost = compute_rc_cost_of_resource( params.curve_params, pool, count.resource_count[i] );
       total_cost += cost;
    }
 
@@ -208,7 +208,7 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
    }
 
    // How many resources did transactions use?
-   count_resources_result_type count;
+   count_resources_result count;
    for( const signed_transaction& tx : note.block.transactions )
    {
       count_resources( tx, count );
@@ -216,12 +216,12 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
 
    const rc_resource_param_object& params_obj = _db.get< rc_resource_param_object, by_id >( rc_resource_param_object::id_type() );
 
-   db.modify( _db.get< rc_pool_object, by_id >( rc_pool_object::id_type() ),
+   _db.modify( _db.get< rc_pool_object, by_id >( rc_pool_object::id_type() ),
       [&]( rc_pool_object& pool_obj )
       {
          for( size_t i=0; i<STEEM_NUM_RESOURCE_TYPES; i++ )
          {
-            const rc_resource_params& params = params_obj[i];
+            const rc_resource_params& params = params_obj.resource_param_array[i];
             int64_t& pool = pool_obj.pool_array[i];
             uint32_t dt = 0;
 
@@ -231,7 +231,7 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
                   dt = 1;
                   break;
                case rc_time_unit_seconds:
-                  dt = gpo.timestamp.sec_since_epoch() - pool_obj.last_update.sec_since_epoch();
+                  dt = gpo.time.sec_since_epoch() - pool_obj.last_update.sec_since_epoch();
                   break;
                default:
                   FC_ASSERT( false, "unknown time unit in RC parameter object" );

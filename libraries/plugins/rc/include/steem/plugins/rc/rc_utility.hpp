@@ -43,7 +43,8 @@ int64_t compute_rc_cost_of_resource(
    int64_t resource_count );
 int64_t compute_pool_decay(
    const rc_decay_params& decay_params,
-   int64_t current_pool
+   int64_t current_pool,
+   uint32_t dt
    );
 
 } } } // steem::plugins::rc
