@@ -3,16 +3,19 @@
 
 #include <steem/chain/account_object.hpp>
 #include <steem/chain/database.hpp>
+#include <steem/chain/database_exceptions.hpp>
 #include <steem/chain/index.hpp>
 #include <steem/chain/operation_notification.hpp>
 
 #include <steem/jsonball/jsonball.hpp>
 
+#define STEEM_RC_REGEN_TIME   (60*60*24*15)
+
 namespace steem { namespace plugins { namespace rc {
 
 namespace detail {
 
-#define STEEM_RC_REGEN_TIME   (60*60*24*15)
+using chain::plugin_exception;
 
 class rc_plugin_impl
 {
@@ -82,7 +85,7 @@ void set_creation_adjustments( database& db, const price& vsp, const signed_tran
 {
    set_creation_adjustment_visitor vtor( db, vsp );
    for( const operation& op : tx.operations )
-      vtor.visit( op );
+      op.visit( vtor );
 }
 
 account_name_type get_resource_user( const signed_transaction& tx )
@@ -107,22 +110,25 @@ account_name_type get_resource_user( const signed_transaction& tx )
 
 void use_account_rcs(
    database& db,
-   const global_property_object& gpo,
+   const dynamic_global_property_object& gpo,
    const account_name_type& account_name,
    int64_t rc )
 {
    const account_object& account = db.get_account( account_name );
-   const rc_account_object& rc_account = get_or_create_rc_account( db, account_name );
+   const rc_account_object& rc_account = get_or_create_rc_account_object( db, account_name );
 
    int64_t dt = int64_t( gpo.time.sec_since_epoch() ) - int64_t( rc_account.rc_usage_last_update.sec_since_epoch() );
    FC_ASSERT( dt >= 0 );
+
+   int64_t rc_max = account.vesting_shares.amount.value;
+   rc_max += rc_account.max_rc_creation_adjustment.amount.value;
 
    int64_t rc_usage = rc_account.rc_usage;
 
    if( rc_usage > 0 )
    {
       uint128_t regen_u128 = uint64_t(dt);
-      regen_u128 *= account.vesting_shares;
+      regen_u128 *= rc_max;
       regen_u128 /= STEEM_RC_REGEN_TIME;
       uint64_t regen = regen_u128.to_uint64();
       if( regen > uint64_t( rc_usage ) )
@@ -131,8 +137,6 @@ void use_account_rcs(
          rc_usage -= int64_t( regen );
    }
 
-   int64_t rc_max = account.vesting_shares.amount.value;
-   rc_max += rc_account.max_rc_creation_adjustment.amount.value;
    int64_t rc_available = rc_max - rc_usage;
 
    bool has_rc = (rc <= rc_available);
@@ -157,13 +161,13 @@ void use_account_rcs(
 
 void rc_plugin_impl::on_post_apply_transaction( const transaction_notification& note )
 {
-   const global_property_object& gpo = _db.get_dynamic_global_properties();
+   const dynamic_global_property_object& gpo = _db.get_dynamic_global_properties();
 
    if( gpo.total_vesting_shares.amount <= 0 )
       return;
 
    // How many resources does the transaction use?
-   count_resources_result_type count;
+   count_resources_result count;
    count_resources( note.transaction, count );
 
    // How many RC does this transaction cost?
@@ -192,7 +196,7 @@ void rc_plugin_impl::on_post_apply_transaction( const transaction_notification& 
 
 void rc_plugin_impl::on_post_apply_block( const block_notification& note )
 {
-   const global_property_object& gpo = _db.get_dynamic_global_properties();
+   const dynamic_global_property_object& gpo = _db.get_dynamic_global_properties();
 
    if( gpo.total_vesting_shares.amount <= 0 )
    {
