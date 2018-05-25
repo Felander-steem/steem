@@ -243,7 +243,7 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
             budget *= int64_t(dt);
             pool += budget;
 
-            pool -= count[i];
+            pool -= count.resource_count[i];
          }
       } );
 }
