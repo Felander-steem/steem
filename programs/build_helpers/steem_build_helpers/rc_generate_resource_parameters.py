@@ -15,7 +15,7 @@ def compute_parameters(args):
     result2 = collections.OrderedDict()
 
     time_unit = args.get("time_unit", "seconds")
-    result["time_unit"] = time_unit
+    result["time_unit"] = "rc_time_unit_"+time_unit
 
     if time_unit == "seconds":
         time_unit_sec = 1

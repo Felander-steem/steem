@@ -6,6 +6,8 @@
 #include <steem/chain/index.hpp>
 #include <steem/chain/operation_notification.hpp>
 
+#include <steem/jsonball/jsonball.hpp>
+
 namespace steem { namespace plugins { namespace rc {
 
 namespace detail {
@@ -207,7 +209,7 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
       return;
    }
 
-   // How many resources does the transaction use?
+   // How many resources did transactions use?
    count_resources_result_type count;
    for( const signed_transaction& tx : note.block.transactions )
    {
@@ -216,36 +218,6 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
 
    const rc_param_object& params_obj = _db.get< rc_param_object, by_id >( rc_param_object::id_type() );
 
-enum rc_time_unit_type
-{
-   rc_time_unit_seconds,
-   rc_time_unit_blocks
-};
-
-struct rc_curve_params
-{
-   uint64_t        coeff_a = 0;
-   uint64_t        coeff_b = 0;
-   int64_t         coeff_d = 0;
-};
-
-struct rc_decay_params
-{
-   uint32_t        decay_per_time_unit = 0;
-   uint8_t         decay_per_time_unit_denom_shift = 0;
-};
-
-struct rc_resource_params
-{
-   int8_t          time_unit = rc_time_unit_seconds;
-   uint8_t         resource_unit_base = 10;
-   uint8_t         resource_unit_exponent = 1;
-
-   rc_curve_params curve_params;
-   rc_decay_params decay_params;
-};
-
-
    db.modify( _db.get< rc_pool_object, by_id >( rc_pool_object::id_type() ),
       [&]( rc_pool_object& pool_obj )
       {
@@ -253,21 +225,48 @@ struct rc_resource_params
          {
             const rc_params& params = params_obj[i];
             int64_t& pool = pool_obj.pool_array[i];
+            uint32_t dt = 0;
 
-            dt = 
+            switch( params.time_unit )
+            {
+               case rc_time_unit_blocks:
+                  dt = 1;
+                  break;
+               case rc_time_unit_seconds:
+                  dt = gpo.timestamp.sec_since_epoch() - pool_obj.last_update.sec_since_epoch();
+                  break;
+               default:
+                  FC_ASSERT( false, "unknown time unit in RC parameter object" );
+            }
+
+            pool -= compute_pool_decay( params.decay_params, current_pool, dt );
 
             int64_t budget = params.budget_per_time_unit;
-            budget *= dt
+            budget *= int64_t(dt);
+            pool += budget;
+
+            pool -= count[i];
          }
       } );
 }
 
 void rc_plugin_impl::on_first_block()
 {
+   std::string resource_params_json = steem::jsonball::get_resource_parameters();
+   fc::variant resource_params_var = fc::json::from_string( resource_params_json, fc::json::strict_parser );
+   std::vector< std::pair< fc::variant, std::pair< fc::variant_object, fc::variant_object > > > resource_params_pairs;
+   fc::from_variant( resource_params_var, resource_params_pairs );
+
    db.create< rc_resource_param_object >(
       []( rc_resource_param_object& params_obj )
       {
-         
+         for( auto& kv : resource_params_pairs )
+         {
+            auto k = kv.first.as< rc_resource_types >();
+            fc::variant_object& v = kv.second.first;
+            v["time_unit"] = int8_t( v["time_unit"].as< rc_time_unit_type >() );
+            fc::from_variant( fc::variant( v ), resource_param_array[ k ] );
+         }
       } );
    db.create< rc_pool_object >(
       []( rc_pool_object& pool_obj )
