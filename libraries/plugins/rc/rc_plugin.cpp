@@ -256,7 +256,7 @@ void rc_plugin_impl::on_first_block()
    fc::from_variant( resource_params_var, resource_params_pairs );
 
    _db.create< rc_resource_param_object >(
-      []( rc_resource_param_object& params_obj )
+      [&]( rc_resource_param_object& params_obj )
       {
          for( auto& kv : resource_params_pairs )
          {
@@ -267,7 +267,7 @@ void rc_plugin_impl::on_first_block()
          }
       } );
    _db.create< rc_pool_object >(
-      []( rc_pool_object& pool_obj )
+      [&]( rc_pool_object& pool_obj )
       {
          for( size_t i=0; i<STEEM_NUM_RESOURCE_TYPES; i++ )
             pool_obj.pool_array[i] = 0;
