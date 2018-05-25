@@ -26,6 +26,7 @@ endif()
 execute_process(
    COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/../../programs/build_helpers
    python3 -m steem_build_helpers.rc_generate_resource_parameters
+   -i ${CMAKE_CURRENT_SOURCE_DIR}/data/resource_parameters.json
    -o ${CMAKE_CURRENT_BINARY_DIR}/template_context/resource_parameters.json
    RESULT_VARIABLE RETURN_VALUE
 )
