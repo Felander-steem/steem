@@ -34,3 +34,9 @@ void count_resources(
    count_resources_result& result );
 
 } } } // steem::plugins::rc
+
+FC_REFLECT_ENUM( steem::plugins::rc::rc_resource_types,
+    (resource_history_bytes)
+    (resource_new_accounts)
+    (resource_market_bytes)
+   )
