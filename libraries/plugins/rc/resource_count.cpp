@@ -5,13 +5,15 @@
 
 namespace steem { namespace plugins { namespace rc {
 
+using namespace steem::protocol;
+
 struct count_operation_visitor
 {
    typedef void result_type;
 
    count_resources_result& state;
 
-   count_operation_visitor( count_operation_visitor_state& s ) : state(s) {}
+   count_operation_visitor( count_resources_result& s ) : state(s) {}
 
    template< typename OpType >
    void operator()( const OpType op )const {}
@@ -39,7 +41,7 @@ struct count_operation_visitor
 };
 
 void count_resources(
-   const steem::protocol::signed_transaction& tx,
+   const signed_transaction& tx,
    count_resources_result& result )
 {
    const int64_t tx_size = int64_t( fc::raw::pack_size( tx ) );
@@ -48,11 +50,11 @@ void count_resources(
    result.resource_count[ resource_history_bytes ] += tx_size;
 
    for( const operation& op : tx.operations )
-      vtor.visit( op );
+      op.visit( vtor );
 
    result.resource_count[ resource_new_accounts ] += result.new_account_op_count;
 
-   if( vtor.market_op_count > 0 )
+   if( result.market_op_count > 0 )
       result.resource_count[ resource_market_bytes ] += tx_size;
 }
 

@@ -2,7 +2,9 @@ file(GLOB HEADERS "include/steem/plugins/rc/*.hpp")
 
 add_library( rc_plugin
              rc_plugin.cpp
+             rc_utility.cpp
              resource_count.cpp
+             resource_user.cpp
            )
 
 target_link_libraries( rc_plugin chain_plugin steem_chain steem_jsonball steem_protocol )

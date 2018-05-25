@@ -3,6 +3,8 @@
 
 #include <steem/protocol/transaction.hpp>
 
+namespace steem { namespace plugins { namespace rc {
+
 account_name_type get_resource_user( const signed_transaction& tx )
 {
    flat_set< account_name_type > req_active;
@@ -22,3 +24,5 @@ account_name_type get_resource_user( const signed_transaction& tx )
    }
    return account_name_type();
 }
+
+} } } // steem::plugins::rc

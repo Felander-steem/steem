@@ -1,5 +1,6 @@
 #pragma once
 #include <steem/plugins/rc/rc_utility.hpp>
+#include <steem/plugins/rc/resource_count.hpp>
 
 #include <steem/chain/steem_object_types.hpp>
 
@@ -43,7 +44,7 @@ class rc_pool_object : public object< rc_pool_object_type, rc_pool_object >
       {
          c( *this );
          for( size_t i=0; i<STEEM_NUM_RESOURCE_TYPES; i++ )
-            rc_pool[i] = 0;
+            pool_array[i] = 0;
       }
 
       id_type               id;

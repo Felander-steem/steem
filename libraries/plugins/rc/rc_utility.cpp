@@ -1,5 +1,11 @@
 
+#include <steem/plugins/rc/rc_utility.hpp>
+
+#include <fc/uint128.hpp>
+
 namespace steem { namespace plugins { namespace rc {
+
+using fc::uint128_t;
 
 int64_t compute_rc_cost_of_resource(
    const rc_curve_params& curve_params,
@@ -29,7 +35,7 @@ int64_t compute_rc_cost_of_resource(
    num_denom_minus_discount >>= curve_params.shift;
    // Add 1 to avoid 0 result in case of various rounding issues,
    // err on the side of rounding not in the user's favor
-   return result+1;
+   return num_denom_minus_discount.to_uint64()+1;
 }
 
 int64_t compute_pool_decay(
