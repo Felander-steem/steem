@@ -171,14 +171,14 @@ void rc_plugin_impl::on_post_apply_transaction( const transaction_notification& 
    count_resources( note.transaction, count );
 
    // How many RC does this transaction cost?
-   const rc_param_object& params_obj = _db.get< rc_param_object, by_id >( rc_param_object::id_type() );
+   const rc_resource_param_object& params_obj = _db.get< rc_resource_param_object, by_id >( rc_resource_param_object::id_type() );
    const rc_pool_object& pool_obj = _db.get< rc_pool_object, by_id >( rc_pool_object::id_type() );
 
    int64_t total_cost = 0;
 
    for( size_t i=0; i<STEEM_NUM_RESOURCE_TYPES; i++ )
    {
-      const rc_params& params = params_obj.param_array[i];
+      const rc_resource_params& params = params_obj.resource_param_array[i];
       int64_t pool = pool_obj.pool_array[i];
 
       int64_t cost = compute_rc_cost_of_resources( params.curve_params, pool, count.resource_count[i] );
@@ -214,14 +214,14 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
       count_resources( tx, count );
    }
 
-   const rc_param_object& params_obj = _db.get< rc_param_object, by_id >( rc_param_object::id_type() );
+   const rc_resource_param_object& params_obj = _db.get< rc_resource_param_object, by_id >( rc_resource_param_object::id_type() );
 
    db.modify( _db.get< rc_pool_object, by_id >( rc_pool_object::id_type() ),
       [&]( rc_pool_object& pool_obj )
       {
          for( size_t i=0; i<STEEM_NUM_RESOURCE_TYPES; i++ )
          {
-            const rc_params& params = params_obj[i];
+            const rc_resource_params& params = params_obj[i];
             int64_t& pool = pool_obj.pool_array[i];
             uint32_t dt = 0;
 
