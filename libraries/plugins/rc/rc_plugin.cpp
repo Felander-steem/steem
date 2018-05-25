@@ -36,17 +36,11 @@ const rc_account_object& get_or_create_rc_account_object( database& db, const ac
    if( result != nullptr )
       return *result;
 
-   return db.create< rc_account_object >( rc_account_object& rc_account )
+   return db.create< rc_account_object >( [&]( rc_account_object& rc_account )
    {
       rc_account.account = account;
       rc_account.rc_usage_last_update = STEEM_GENESIS_TIME;
-   };
-}
-
-void set_creation_adjustment( database& db, const account_name_type& account )
-{
-   FC_ASSERT( amount.symbol == STEEM_SYMBOL );
-   const rc_account_object& rc_account = get_or_create_rc_account_object( db, account );
+   } );
 }
 
 struct set_creation_adjustment_visitor
@@ -62,14 +56,14 @@ struct set_creation_adjustment_visitor
       : _db(db), _vesting_share_price(vsp)
    {}
 
-   void set_creation_adjustment( const account_name_type& account, const asset& fee )
+   void set_creation_adjustment( const account_name_type& account, const asset& fee )const
    {
       // NB this "times" is actually division
       asset fee_vests = fee * _vesting_share_price;
       _db.modify( get_or_create_rc_account_object( _db, account ),
          [&]( rc_account_object& rc_account )
          {
-            rc_account.max_rc_creation_adjustment = fee_vests.amount.value;
+            rc_account.max_rc_creation_adjustment = fee_vests;
          } );
    }
 
@@ -138,7 +132,7 @@ void use_account_rcs(
    }
 
    int64_t rc_max = account.vesting_shares.amount.value;
-   rc_max += rc_account.max_rc_creation_adjustment;
+   rc_max += rc_account.max_rc_creation_adjustment.amount.value;
    int64_t rc_available = rc_max - rc_usage;
 
    bool has_rc = (rc <= rc_available);
@@ -239,7 +233,7 @@ void rc_plugin_impl::on_post_apply_block( const block_notification& note )
                   FC_ASSERT( false, "unknown time unit in RC parameter object" );
             }
 
-            pool -= compute_pool_decay( params.decay_params, current_pool, dt );
+            pool -= compute_pool_decay( params.decay_params, pool, dt );
 
             int64_t budget = params.budget_per_time_unit;
             budget *= int64_t(dt);

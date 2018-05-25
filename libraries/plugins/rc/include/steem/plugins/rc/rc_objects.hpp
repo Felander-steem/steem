@@ -67,7 +67,7 @@ class rc_account_object : public object< rc_account_object_type, rc_account_obje
       account_name_type     account;
       int64_t               rc_usage = 0;
       fc::time_point_sec    rc_usage_last_update;
-      int64_t               max_rc_creation_adjustment = 0;
+      asset                 max_rc_creation_adjustment = asset( 0, VESTS_SYMBOL );
 };
 
 using namespace boost::multi_index;
@@ -93,7 +93,6 @@ typedef multi_index_container<
    indexed_by<
       ordered_unique< tag< by_id >, member< rc_account_object, rc_account_object::id_type, &rc_account_object::id > >,
       ordered_unique< tag< by_name >, member< rc_account_object, account_name_type, &rc_account_object::account > >
-      >
    >,
    allocator< rc_account_object >
 > rc_account_index;

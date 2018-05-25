@@ -5,6 +5,8 @@
 
 namespace steem { namespace plugins { namespace rc {
 
+using namespace steem::protocol;
+
 account_name_type get_resource_user( const signed_transaction& tx )
 {
    flat_set< account_name_type > req_active;
