@@ -255,7 +255,7 @@ void rc_plugin_impl::on_first_block()
    std::vector< std::pair< fc::variant, std::pair< fc::variant_object, fc::variant_object > > > resource_params_pairs;
    fc::from_variant( resource_params_var, resource_params_pairs );
 
-   db.create< rc_resource_param_object >(
+   _db.create< rc_resource_param_object >(
       []( rc_resource_param_object& params_obj )
       {
          for( auto& kv : resource_params_pairs )
@@ -266,12 +266,12 @@ void rc_plugin_impl::on_first_block()
             fc::from_variant( fc::variant( v ), resource_param_array[ k ] );
          }
       } );
-   db.create< rc_pool_object >(
+   _db.create< rc_pool_object >(
       []( rc_pool_object& pool_obj )
       {
          for( size_t i=0; i<STEEM_NUM_RESOURCE_TYPES; i++ )
             pool_obj.pool_array[i] = 0;
-         pool_obj.last_update = db.get_dynamic_global_properties().time;
+         pool_obj.last_update = _db.get_dynamic_global_properties().time;
       } );
    return;
 }
