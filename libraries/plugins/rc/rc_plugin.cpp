@@ -30,6 +30,7 @@ class rc_plugin_impl
 
       database&                     _db;
       rc_plugin&                    _self;
+      boost::signals2::connection   _post_apply_block_conn;
       boost::signals2::connection   _post_apply_transaction_conn;
 };
 
@@ -261,9 +262,10 @@ void rc_plugin_impl::on_first_block()
          for( auto& kv : resource_params_pairs )
          {
             auto k = kv.first.as< rc_resource_types >();
-            fc::variant_object& v = kv.second.first;
-            v["time_unit"] = int8_t( v["time_unit"].as< rc_time_unit_type >() );
-            fc::from_variant( fc::variant( v ), resource_param_array[ k ] );
+            fc::variant_object& vo = kv.second.first;
+            fc::mutable_variant_object mvo(vo);
+            mvo["time_unit"] = int8_t( vo["time_unit"].as< rc_time_unit_type >() );
+            fc::from_variant( fc::variant( mvo ), resource_param_array[ k ] );
          }
       } );
    _db.create< rc_pool_object >(
@@ -305,8 +307,8 @@ void rc_plugin::plugin_startup() {}
 
 void rc_plugin::plugin_shutdown()
 {
-   chain::util::disconnect_signal( my->_pre_apply_operation_conn );
-   chain::util::disconnect_signal( my->_post_apply_operation_conn );
+   chain::util::disconnect_signal( my->_post_apply_block_conn );
+   chain::util::disconnect_signal( my->_post_apply_transaction_conn );
 }
 
 } } } // steem::plugins::rc
