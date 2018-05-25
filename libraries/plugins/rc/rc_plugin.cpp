@@ -80,6 +80,9 @@ struct set_creation_adjustment_visitor
    {
       set_creation_adjustment( op.new_account_name, op.fee );
    }
+
+   template< typename OpType >
+   void operator()( const OpType op )const {}
 };
 
 void set_creation_adjustments( database& db, const price& vsp, const signed_transaction& tx )
